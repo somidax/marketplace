@@ -7,3 +7,8 @@ Allow users to withdraw
     1. Eth
     2. Usdt and Smdx
 Alloq users to buy coffee for bloggers with smdx and usdt
+
+Somidax MarketPlace Contract
+Allow users to list NFT
+Allow users to buy NFT
+Allow user to cancel NFT

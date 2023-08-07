@@ -31,7 +31,7 @@ error Somidax__Funds__NotEnoughAmountSent(
     address sender,
     string receiver
 );
-error Somidax__Funds__AmountMustBeMorethan0(string symbol);
+error Somidax__Funds__AmountMustBeMorethan0(uint256 amount);
 
 contract Somidax__Funds is Ownable {
     constructor() {}
@@ -208,6 +208,17 @@ contract Somidax__Funds is Ownable {
             // Emit the BuyCoffee event with details of the transaction
             emit BuyCoffee(receiverAddr, msg.sender, amount);
         }
+    }
+
+    function increaseUserFunds(
+        address token,
+        address userAddress,
+        uint256 amount
+    ) external {
+        if (amount <= 0) {
+            revert Somidax__Funds__AmountMustBeMorethan0(amount);
+        }
+        balance[token][userAddress] += amount;
     }
 
     ////////////////////////////
