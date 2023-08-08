@@ -3,17 +3,17 @@
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
-import {SMDX_Token} from "../src/SMDX_Token.sol";
+import {SMDXToken} from "../src/SMDX_Token.sol";
 
-contract Deploy__SMDX_Tokens is Script {
+contract DeploySMDXTokens is Script {
     constructor() {}
 
-    SMDX_Token smdx_Token;
+    SMDXToken _smdxToken;
 
-    function run() public returns (SMDX_Token smdx_addr) {
+    function run() public returns (SMDXToken smdxaddr) {
         vm.startBroadcast();
-        smdx_Token = new SMDX_Token();
+        _smdxToken = new SMDXToken();
         vm.stopBroadcast();
-        return smdx_Token;
+        return _smdxToken;
     }
 }

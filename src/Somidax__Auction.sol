@@ -28,7 +28,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract Somidax__Auction is Ownable {
+contract SomidaxAuction is Ownable {
     constructor() {}
 
     //////////////////////
@@ -60,16 +60,13 @@ contract Somidax__Auction is Ownable {
     ////Mappings     ///
     ////////////////
 
-    mapping(address => bool) private payableToken;
-    address[] private tokens;
-
     // nft => tokenId => acuton struct
-    mapping(address => mapping(uint256 => AuctionNFT)) private auctionNfts;
+    mapping(address => mapping(uint256 => AuctionNFT)) private _auctionNfts;
 
     // auciton index => bidding counts => bidder address => bid price
     mapping(uint256 => mapping(uint256 => mapping(address => uint256)))
-        private bidPrices;
-    mapping(uint256 => BiderDetails[]) private biders;
+        private _bidPrices;
+    mapping(uint256 => BiderDetails[]) private _biders;
 
     //////////////////////
     ////Events     ///
@@ -143,7 +140,7 @@ contract Somidax__Auction is Ownable {
         nft.transferFrom(msg.sender, address(this), _tokenId);
 
         // Store the auction details in the mapping
-        auctionNfts[_nft][_tokenId] = AuctionNFT({
+        _auctionNfts[_nft][_tokenId] = AuctionNFT({
             nft: _nft,
             tokenId: _tokenId,
             creator: msg.sender,
@@ -175,15 +172,15 @@ contract Somidax__Auction is Ownable {
         address _nft,
         uint256 _tokenId
     ) external isAuction(_nft, _tokenId) {
-        AuctionNFT memory auction = auctionNfts[_nft][_tokenId];
+        AuctionNFT memory auction = _auctionNfts[_nft][_tokenId];
         require(auction.creator == msg.sender, "not auction creator");
         require(block.timestamp < auction.startTime, "auction already started");
         require(auction.lastBidder == address(0), "already have bidder");
 
         IERC721 nft = IERC721(_nft);
         nft.transferFrom(address(this), msg.sender, _tokenId);
-        delete auctionNfts[_nft][_tokenId];
-        delete biders[_tokenId];
+        delete _auctionNfts[_nft][_tokenId];
+        delete _biders[_tokenId];
     }
 
     // @notice Bid place auction
@@ -193,21 +190,21 @@ contract Somidax__Auction is Ownable {
         uint256 _bidPrice
     ) external isAuction(_nft, _tokenId) {
         require(
-            block.timestamp >= auctionNfts[_nft][_tokenId].startTime,
+            block.timestamp >= _auctionNfts[_nft][_tokenId].startTime,
             "auction not start"
         );
         require(
-            block.timestamp <= auctionNfts[_nft][_tokenId].endTime,
+            block.timestamp <= _auctionNfts[_nft][_tokenId].endTime,
             "auction ended"
         );
         require(
             _bidPrice >=
-                auctionNfts[_nft][_tokenId].heighestBid +
-                    auctionNfts[_nft][_tokenId].minBid,
+                _auctionNfts[_nft][_tokenId].heighestBid +
+                    _auctionNfts[_nft][_tokenId].minBid,
             "less than min bid price"
         );
 
-        AuctionNFT storage auction = auctionNfts[_nft][_tokenId];
+        AuctionNFT storage auction = _auctionNfts[_nft][_tokenId];
         IERC20 payToken = IERC20(auction.payToken);
         payToken.transferFrom(msg.sender, address(this), _bidPrice);
 
@@ -223,7 +220,7 @@ contract Somidax__Auction is Ownable {
         auction.lastBidder = msg.sender;
         auction.heighestBid = _bidPrice;
 
-        BiderDetails[] storage bidersAddressesForTokenId = biders[_tokenId];
+        BiderDetails[] storage bidersAddressesForTokenId = _biders[_tokenId];
         bidersAddressesForTokenId.push(
             BiderDetails(msg.sender, block.timestamp, _bidPrice)
         );
@@ -233,19 +230,19 @@ contract Somidax__Auction is Ownable {
 
     // @notice Result auction, can call by auction creator, heighest bidder, or marketplace owner only!
     function resultAuction(address _nft, uint256 _tokenId) external {
-        require(!auctionNfts[_nft][_tokenId].success, "already resulted");
+        require(!_auctionNfts[_nft][_tokenId].success, "already resulted");
         require(
             msg.sender == owner() ||
-                msg.sender == auctionNfts[_nft][_tokenId].creator ||
-                msg.sender == auctionNfts[_nft][_tokenId].lastBidder,
+                msg.sender == _auctionNfts[_nft][_tokenId].creator ||
+                msg.sender == _auctionNfts[_nft][_tokenId].lastBidder,
             "not creator, winner, or owner"
         );
         require(
-            block.timestamp > auctionNfts[_nft][_tokenId].endTime,
+            block.timestamp > _auctionNfts[_nft][_tokenId].endTime,
             "auction not ended"
         );
 
-        AuctionNFT storage auction = auctionNfts[_nft][_tokenId];
+        AuctionNFT storage auction = _auctionNfts[_nft][_tokenId];
         IERC20 payToken = IERC20(auction.payToken);
         IERC721 nft = IERC721(auction.nft);
 
@@ -275,7 +272,7 @@ contract Somidax__Auction is Ownable {
     }
 
     function _isNotAuction(address _nft, uint256 _tokenId) private view {
-        AuctionNFT memory auction = auctionNfts[_nft][_tokenId];
+        AuctionNFT memory auction = _auctionNfts[_nft][_tokenId];
         require(
             auction.nft == address(0) || auction.success,
             "auction already created"
@@ -283,7 +280,7 @@ contract Somidax__Auction is Ownable {
     }
 
     function _isAuction(address _nft, uint256 _tokenId) private view {
-        AuctionNFT memory auction = auctionNfts[_nft][_tokenId];
+        AuctionNFT memory auction = _auctionNfts[_nft][_tokenId];
         require(
             auction.nft != address(0) && !auction.success,
             "auction already created"
@@ -296,6 +293,6 @@ contract Somidax__Auction is Ownable {
     function getBidders(
         uint256 _tokenId
     ) public view returns (BiderDetails[] memory) {
-        return biders[_tokenId];
+        return _biders[_tokenId];
     }
 }

@@ -26,14 +26,14 @@ pragma solidity ^0.8.18;
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-error Somidax__Funds__NotEnoughAmountSent(
+error SomidaxFundsNotEnoughAmountSent(
     uint256 amount,
     address sender,
     string receiver
 );
 error Somidax__Funds__AmountMustBeMorethan0(uint256 amount);
 
-contract Somidax__Funds is Ownable {
+contract SomidaxFunds is Ownable {
     constructor() {}
 
     /////////////////////
@@ -43,10 +43,10 @@ contract Somidax__Funds is Ownable {
     /////////////////////
     // MAPPING //
     /////////////////////
-    mapping(address token => mapping(address userAddress => uint256)) balance;
+    mapping(address token => mapping(address userAddress => uint256)) _balance;
     /////////////////////
     // EVENTS //
-    /////////////////////
+    /////////////////////ba
 
     event Transfer(
         address indexed receiver,
@@ -76,15 +76,15 @@ contract Somidax__Funds is Ownable {
         uint256 amount,
         address payToken
     ) external {
-        require(amount > 0, "Amount must be greater than 0");
+        require(amount <= 0, "Amount must be greater than 0");
 
         // Check if the sender has sufficient balance
-        uint256 senderBalance = balance[payToken][msg.sender];
+        uint256 senderBalance = _balance[payToken][msg.sender];
         require(senderBalance >= amount, "Insufficient balance");
 
         // Update sender and receiver balances
-        balance[payToken][msg.sender] -= amount;
-        balance[payToken][receiver] += amount;
+        _balance[payToken][msg.sender] -= amount;
+        _balance[payToken][receiver] += amount;
 
         // Emit the Transfer event with details of the transaction
         emit Transfer(receiver, msg.sender, amount, payToken);
@@ -100,7 +100,7 @@ contract Somidax__Funds is Ownable {
         require(sent, "Failed to send Ether");
 
         // Update the user's Ether balance in the mapping
-        balance[payToken][msg.sender] += msg.value;
+        _balance[payToken][msg.sender] += msg.value;
 
         // Emit the Deposit event with details of the transaction
         emit Deposit(msg.sender, payToken, msg.value);
@@ -117,13 +117,13 @@ contract Somidax__Funds is Ownable {
         );
 
         // Update the user's token balance in the mapping
-        balance[payToken][msg.sender] += amount;
+        _balance[payToken][msg.sender] += amount;
         // Emit the Deposit event with details of the transaction
         emit Deposit(msg.sender, payToken, amount);
     }
 
     function withdrawEth(uint256 amount) external {
-        uint256 etherBalance = balance[address(0)][msg.sender];
+        uint256 etherBalance = _balance[address(0)][msg.sender];
         // Check if the user has sufficient Ether balance
         require(etherBalance >= amount, "Insufficient Ether balance");
 
@@ -133,7 +133,7 @@ contract Somidax__Funds is Ownable {
         require(sent, "Failed to send Ether");
 
         // Update the user's Ether balance after the withdrawal
-        balance[address(0)][msg.sender] -= amount;
+        _balance[address(0)][msg.sender] -= amount;
         // Emit the Withdraw event with details of the transaction
         emit Withdraw(msg.sender, amount);
     }
@@ -143,7 +143,7 @@ contract Somidax__Funds is Ownable {
 
         if (payToken == address(0)) {
             // Withdraw Ether (ETH)
-            uint256 etherBalance = balance[payToken][msg.sender];
+            uint256 etherBalance = _balance[payToken][msg.sender];
             require(etherBalance >= amount, "Insufficient Ether balance");
 
             // Transfer the Ether to the sender
@@ -152,12 +152,12 @@ contract Somidax__Funds is Ownable {
             require(sent, "Failed to send Ether");
 
             // Update the balance
-            balance[payToken][msg.sender] -= amount;
+            _balance[payToken][msg.sender] -= amount;
             // Emit the Withdraw event with details of the transaction
             emit Withdraw(msg.sender, amount);
         } else {
             // Withdraw ERC-20 tokens
-            uint256 tokenBalance = balance[payToken][msg.sender];
+            uint256 tokenBalance = _balance[payToken][msg.sender];
             require(amount > 0, "Amount must be greater than 0");
             require(tokenBalance >= amount, "Insufficient token balance");
 
@@ -170,7 +170,7 @@ contract Somidax__Funds is Ownable {
             );
 
             // Update the balance
-            balance[payToken][msg.sender] -= amount;
+            _balance[payToken][msg.sender] -= amount;
 
             // Emit the Withdraw event with details of the transaction
             emit Withdraw(msg.sender, amount);
@@ -189,7 +189,7 @@ contract Somidax__Funds is Ownable {
             require(sent, "Failed to send Ether");
 
             // Increase the ETH balance of the receiver
-            balance[payToken][receiverAddr] += amount;
+            _balance[payToken][receiverAddr] += amount;
 
             // Emit the BuyCoffee event with details of the transaction
             emit BuyCoffee(receiverAddr, msg.sender, amount);
@@ -203,7 +203,7 @@ contract Somidax__Funds is Ownable {
             );
 
             // Increase the token balance of the receiver
-            balance[payToken][receiverAddr] += amount;
+            _balance[payToken][receiverAddr] += amount;
 
             // Emit the BuyCoffee event with details of the transaction
             emit BuyCoffee(receiverAddr, msg.sender, amount);
@@ -218,7 +218,7 @@ contract Somidax__Funds is Ownable {
         if (amount <= 0) {
             revert Somidax__Funds__AmountMustBeMorethan0(amount);
         }
-        balance[token][userAddress] += amount;
+        _balance[token][userAddress] += amount;
     }
 
     ////////////////////////////
@@ -226,6 +226,6 @@ contract Somidax__Funds is Ownable {
     ////////////////////////////
     function getUserBalance(address token) external view returns (uint256) {
         // Function to get the Tokens in the Contract
-        return balance[token][msg.sender];
+        return _balance[token][msg.sender];
     }
 }

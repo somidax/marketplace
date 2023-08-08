@@ -3,17 +3,17 @@
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
-import {Somidax__Auction} from "../src/Somidax__Auction.sol";
+import {SomidaxAuction} from "../src/Somidax__Auction.sol";
 
-contract Deploy__SMDX_Auction is Script {
+contract DeploySMDXAuction is Script {
     constructor() {}
 
-    Somidax__Auction somidax__auction;
+    SomidaxAuction _somidaxauction;
 
-    function run() external returns (Somidax__Auction smdx_addr) {
+    function run() external returns (SomidaxAuction smdxaddr) {
         vm.startBroadcast();
-        somidax__auction = new Somidax__Auction();
+        _somidaxauction = new SomidaxAuction();
         vm.stopBroadcast();
-        return somidax__auction;
+        return _somidaxauction;
     }
 }

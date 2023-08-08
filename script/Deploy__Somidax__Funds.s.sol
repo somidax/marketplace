@@ -3,17 +3,17 @@
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
-import {Somidax__Funds} from "../src/Somidax__Funds.sol";
+import {SomidaxFunds} from "../src/Somidax__Funds.sol";
 
-contract Deploy__Somidax__Funds is Script {
+contract DeploySomidaxFunds is Script {
     constructor() {}
 
-    Somidax__Funds smdx_funds;
+    SomidaxFunds _smdxfunds;
 
-    function run() external returns (Somidax__Funds smdx_addr) {
+    function run() external returns (SomidaxFunds _smdxAddr) {
         vm.startBroadcast();
-        smdx_funds = new Somidax__Funds();
+        _smdxfunds = new SomidaxFunds();
         vm.stopBroadcast();
-        return smdx_funds;
+        return _smdxfunds;
     }
 }

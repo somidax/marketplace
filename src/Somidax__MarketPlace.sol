@@ -30,7 +30,9 @@ import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ISomidax__Funds} from "./Interfaces/ISomidax__Funds.sol";
 
-contract Somidax__MarketPlace is Ownable {
+error SomidaxMarketPlace__NFTAlreadySold();
+
+contract SomidaxMarketPlace is Ownable {
     constructor() {}
 
     ///////////////
@@ -48,9 +50,7 @@ contract Somidax__MarketPlace is Ownable {
     ///////////////
     //// Mapping ////
     ///////////////
-    mapping(address => bool) private payableToken;
-    address[] private tokens;
-    mapping(address => mapping(uint256 => ListNFT)) internal listNfts;
+    mapping(address => mapping(uint256 => ListNFT)) internal _listNfts;
 
     ///////////////
     //// Events ////
@@ -72,6 +72,13 @@ contract Somidax__MarketPlace is Ownable {
         address indexed buyer
     );
 
+    event TransferNFT(
+        address indexed nft,
+        uint256 indexed tokenId,
+        address indexed sender,
+        address receiver
+    );
+
     ///////////////
     //// Functions ////
     ///////////////
@@ -85,7 +92,7 @@ contract Somidax__MarketPlace is Ownable {
         require(nft.ownerOf(_tokenId) == msg.sender, "not nft owner");
         nft.transferFrom(msg.sender, address(this), _tokenId);
 
-        listNfts[_nft][_tokenId] = ListNFT({
+        _listNfts[_nft][_tokenId] = ListNFT({
             nft: _nft,
             tokenId: _tokenId,
             seller: msg.sender,
@@ -105,7 +112,7 @@ contract Somidax__MarketPlace is Ownable {
         address somidaxFundAddr
     ) public {
         // Retrieve the NFT listing from the mapping using contract address and token ID
-        ListNFT storage listNft = listNfts[_nft][_tokenId];
+        ListNFT storage listNft = _listNfts[_nft][_tokenId];
 
         // Check if the payToken is valid and matches the NFT listing
         require(
@@ -147,12 +154,41 @@ contract Somidax__MarketPlace is Ownable {
         );
 
         // Delete the NFT listing from the marketplace after the event is emitted
-        delete listNfts[_nft][_tokenId];
+        delete _listNfts[_nft][_tokenId];
     }
 
-    function cancelListing() public {}
+    function cancelListing(uint256 _tokenId, address _nft) public {
+        ListNFT memory listedNft = _listNfts[msg.sender][_tokenId];
+        if (listedNft.sold == true) {
+            revert SomidaxMarketPlace__NFTAlreadySold();
+        }
+        IERC721 nft = IERC721(_nft);
+        require(
+            nft.ownerOf(_tokenId) == msg.sender,
+            "Only Owners can cancel NFT"
+        );
 
-    function transferNFT() public {}
+        delete _listNfts[msg.sender][_tokenId];
+    }
+
+    function transferNFT(
+        uint256 _tokenId,
+        address _nft,
+        address receiver
+    ) public {
+        IERC721 nft = IERC721(_nft);
+        address owner = nft.ownerOf(_tokenId);
+        require(owner == msg.sender, "Only Owners can Transfer Their NFT");
+        require(
+            receiver != address(0),
+            "Cant Not Transfer NFT to a zero address"
+        );
+        require(owner != owner, "Cant Not Transfer NFT to Your self");
+
+        nft.transferFrom(msg.sender, receiver, _tokenId);
+
+        emit TransferNFT(_nft, _tokenId, msg.sender, receiver);
+    }
 
     //////////////////////////////////////
     //// GETTERS: view and pure functions ////
