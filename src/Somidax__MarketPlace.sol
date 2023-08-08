@@ -50,7 +50,8 @@ contract SomidaxMarketPlace is Ownable {
     ///////////////
     //// Mapping ////
     ///////////////
-    mapping(address => mapping(uint256 => ListNFT)) internal _listNfts;
+    mapping(address owner => mapping(uint256 _tokenId => ListNFT))
+        internal _listNfts;
 
     ///////////////
     //// Events ////
@@ -193,4 +194,10 @@ contract SomidaxMarketPlace is Ownable {
     //////////////////////////////////////
     //// GETTERS: view and pure functions ////
     //////////////////////////////////////
+
+    function getListedNft(
+        uint256 _tokenId
+    ) external view returns (ListNFT memory listedNFT) {
+        return _listNfts[msg.sender][_tokenId];
+    }
 }

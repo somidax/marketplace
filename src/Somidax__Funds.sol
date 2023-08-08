@@ -76,7 +76,7 @@ contract SomidaxFunds is Ownable {
         uint256 amount,
         address payToken
     ) external {
-        require(amount <= 0, "Amount must be greater than 0");
+        require(amount > 0, "Amount must be greater than 0");
 
         // Check if the sender has sufficient balance
         uint256 senderBalance = _balance[payToken][msg.sender];
