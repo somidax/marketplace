@@ -62,7 +62,8 @@ contract SomidaxMarketPlace is Ownable {
         uint256 indexed tokenId,
         address payToken,
         uint256 price,
-        address indexed seller
+        address indexed seller,
+        uint256 chainid
     );
     event BoughtNFT(
         address indexed nft,
@@ -70,14 +71,16 @@ contract SomidaxMarketPlace is Ownable {
         address payToken,
         uint256 price,
         address seller,
-        address indexed buyer
+        address indexed buyer,
+        uint256 chainid
     );
 
     event TransferNFT(
         address indexed nft,
         uint256 indexed tokenId,
         address indexed sender,
-        address receiver
+        address receiver,
+        uint256 chainid
     );
 
     ///////////////
@@ -102,7 +105,14 @@ contract SomidaxMarketPlace is Ownable {
             sold: false
         });
 
-        emit ListedNFT(_nft, _tokenId, _payToken, _price, msg.sender);
+        emit ListedNFT(
+            _nft,
+            _tokenId,
+            _payToken,
+            _price,
+            msg.sender,
+            block.chainid
+        );
     }
 
     function buyNFT(
@@ -151,7 +161,8 @@ contract SomidaxMarketPlace is Ownable {
             listNft.payToken,
             _price,
             listNft.seller,
-            msg.sender
+            msg.sender,
+            block.chainid
         );
 
         // Delete the NFT listing from the marketplace after the event is emitted
@@ -188,7 +199,7 @@ contract SomidaxMarketPlace is Ownable {
 
         nft.transferFrom(msg.sender, receiver, _tokenId);
 
-        emit TransferNFT(_nft, _tokenId, msg.sender, receiver);
+        emit TransferNFT(_nft, _tokenId, msg.sender, receiver, block.chainid);
     }
 
     //////////////////////////////////////

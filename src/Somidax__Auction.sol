@@ -79,14 +79,16 @@ contract SomidaxAuction is Ownable {
         uint256 minBid,
         uint256 startTime,
         uint256 endTime,
-        address indexed creator
+        address indexed creator,
+        uint256 chainid
     );
     event PlacedBid(
         address indexed nft,
         uint256 indexed tokenId,
         address payToken,
         uint256 bidPrice,
-        address indexed bidder
+        address indexed bidder,
+        uint256 chainid
     );
 
     event ResultedAuction(
@@ -95,7 +97,8 @@ contract SomidaxAuction is Ownable {
         address creator,
         address indexed winner,
         uint256 price,
-        address caller
+        address caller,
+        uint256 chainid
     );
 
     //////////////////////
@@ -164,7 +167,8 @@ contract SomidaxAuction is Ownable {
             _minBid,
             _startTime,
             _endTime,
-            msg.sender
+            msg.sender,
+            block.chainid
         );
     }
 
@@ -225,7 +229,14 @@ contract SomidaxAuction is Ownable {
             BiderDetails(msg.sender, block.timestamp, _bidPrice)
         );
 
-        emit PlacedBid(_nft, _tokenId, auction.payToken, _bidPrice, msg.sender);
+        emit PlacedBid(
+            _nft,
+            _tokenId,
+            auction.payToken,
+            _bidPrice,
+            msg.sender,
+            block.chainid
+        );
     }
 
     // @notice Result auction, can call by auction creator, heighest bidder, or marketplace owner only!
@@ -267,7 +278,8 @@ contract SomidaxAuction is Ownable {
             auction.creator,
             auction.lastBidder,
             auction.heighestBid,
-            msg.sender
+            msg.sender,
+            block.chainid
         );
     }
 
