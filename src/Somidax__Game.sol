@@ -18,8 +18,6 @@ contract SomidaxGame {
     ////// STATE DECLARATIONS //////////////////
     uint256 private winnersCount = 0;
     uint256 private totalMoneyEarned = 0;
-    uint256 private noOfPlayers = 0;
-    address[] private players;
 
     /////////// EVENTS ///////////////////
     event RecentWinner(string, address, uint256, address);
@@ -28,23 +26,18 @@ contract SomidaxGame {
 
     /////////// MAPPINGS ///////////////////
     mapping(string => Player[]) recentWiinners;
-    mapping(uint256 => RequestStatus)
-        public s_requests; /* requestId --> requestStatus */
+    mapping(string => uint256) noOfPlayers;
+    mapping(string => Player[]) players;
 
     constructor() {}
 
     function addPlayer(
-        address somidaxFundAddr,
         uint256 _price,
-        address _payToken
+        string memory _type
     ) public {
-        ISomidax__Funds(somidaxFundAddr).decreaseUserFunds(
-            _payToken,
-            msg.sender,
-            _price
-        );
-        players.push(msg.sender);
-        noOfPlayers++;
+        Player[] storage _players = players[_type];
+        _players.push(Player({player: msg.sender, amount: _price}));
+        noOfPlayers[_type]++;
     }
 
     function recentWiinner(
@@ -60,13 +53,6 @@ contract SomidaxGame {
         winners.push(Player({player: msg.sender, amount: _price}));
         winnersCount++;
         totalMoneyEarned += _price;
-
-        ISomidax__Funds(somidaxFundAddr).increaseUserFunds(
-            _payToken,
-            msg.sender,
-            _price
-        );
-
         emit RecentWinner(typeGame, somidaxFundAddr, _price, _payToken);
     }
 
@@ -79,12 +65,16 @@ contract SomidaxGame {
         return winnersCount;
     }
 
-    function getNoOfPlayers() external view returns (uint256) {
-        return noOfPlayers;
+    function getNoOfPlayers(
+                string memory _type
+    ) external view returns (uint256) {
+        return noOfPlayers[_type];
     }
 
-    function getPlayers() external view returns (address[] memory _players) {
-        return players;
+    function getPlayers(
+                string memory _type
+    ) external view returns (Player[] memory _players) {
+        return players[_type];
     }
 
     function getWinners(
